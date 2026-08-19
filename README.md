@@ -41,6 +41,33 @@ driver automatically the first time the app runs.
    actual make-or-break problem for a real version of this (see `TAXI-CASHLESS-PAYMENT-BUILD-SPEC.md`,
    §5).
 
+## Deploying to Render
+
+This repo includes a `render.yaml` Blueprint, so Render can pick up the build/start commands
+automatically:
+
+1. Push this repo to GitHub (already done if you're reading this on GitHub).
+2. In the Render dashboard: **New +** → **Blueprint**, connect this repo, and Render will read
+   `render.yaml` and configure the service (build: `npm install && npm run build`, start: `npm start`,
+   free plan).
+   - Alternatively, without the Blueprint: **New +** → **Web Service**, connect the repo, and set the
+     same build/start commands manually — Render auto-detects Node from `package.json`/`.node-version`.
+3. Deploy. Render assigns the port via the `PORT` env var, which `next start` reads automatically —
+   no extra config needed.
+
+**Data persistence caveat:** the local SQLite-style database (`taxi-pay.db`, via `@libsql/client`) lives
+on Render's filesystem, which is **ephemeral on the free plan** — it resets on every redeploy and
+whenever the free instance spins down from inactivity and wakes back up. Wallet balances and
+transaction history will periodically reset; the demo driver reseeds automatically either way. That's
+an acceptable trade-off for a portfolio prototype demo. For persistence, either:
+- point `lib/db.ts` at a hosted libsql database (e.g. [Turso](https://turso.tech), which has a free
+  tier) — since the app already uses `@libsql/client`, this is a small change to the `createClient` call
+  (a remote `url` + `authToken` instead of a local file), or
+- attach a [Render persistent disk](https://render.com/docs/disks) (paid instance types only) mounted
+  at the path `taxi-pay.db` lives under, or
+- swap the datasource for Postgres per the build spec (§2) — a bigger change, since it also means
+  switching Drizzle's dialect from `sqlite-core` to `pg-core`.
+
 ## Project layout
 
 ```

@@ -13,6 +13,14 @@ import { DEMO_DRIVER_ID, DEMO_VEHICLE_ID } from "./constants";
 // Uses @libsql/client rather than better-sqlite3: it ships prebuilt native
 // binaries (no node-gyp/MSBuild compile step needed), which matters on
 // machines without a working native build toolchain.
+//
+// Cached unconditionally on globalThis (not just in dev): Next.js can load
+// this module more than once in the same process — across hot reloads, but
+// also across separate route bundles and `next build`'s parallel static-page
+// workers — and each load's `init()` opens its own connection to the same
+// file. Without a shared client + a single in-flight `ready` promise,
+// concurrent CREATE TABLE / seed writes from those separate instances can
+// collide with SQLITE_BUSY.
 // ---------------------------------------------------------------------------
 
 declare global {
@@ -23,13 +31,16 @@ declare global {
 const dbPath = path.join(process.cwd(), "taxi-pay.db");
 
 const client = globalThis.__taxiPayClient ?? createClient({ url: `file:${dbPath}` });
-if (process.env.NODE_ENV !== "production") {
-  globalThis.__taxiPayClient = client;
-}
+globalThis.__taxiPayClient = client;
 
 export const db = drizzle(client, { schema });
 
 async function init() {
+  // WAL mode + a busy timeout so concurrent connections queue and retry
+  // instead of failing immediately with "database is locked".
+  await client.execute("PRAGMA journal_mode = WAL");
+  await client.execute("PRAGMA busy_timeout = 5000");
+
   await client.executeMultiple(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -68,33 +79,28 @@ async function init() {
 
 // Seed one demo driver + vehicle + wallet so the /driver page works
 // immediately with no signup flow — this is a prototype, not the real
-// phone+OTP auth described in the build spec.
+// phone+OTP auth described in the build spec. `INSERT OR IGNORE` (rather
+// than a SELECT-then-INSERT check) keeps this safe if multiple connections
+// race to seed at once.
 async function seed() {
-  const existing = await client.execute({
-    sql: "SELECT id FROM users WHERE id = ?",
-    args: [DEMO_DRIVER_ID],
-  });
-  if (existing.rows.length) return;
-
   await client.execute({
-    sql: "INSERT INTO users (id, phone, name, role) VALUES (?, ?, ?, ?)",
+    sql: "INSERT OR IGNORE INTO users (id, phone, name, role) VALUES (?, ?, ?, ?)",
     args: [DEMO_DRIVER_ID, "+27821234567", "Sipho Ndlovu", "DRIVER"],
   });
 
   await client.execute({
-    sql: "INSERT INTO vehicles (id, registration, route, driver_id) VALUES (?, ?, ?, ?)",
+    sql: "INSERT OR IGNORE INTO vehicles (id, registration, route, driver_id) VALUES (?, ?, ?, ?)",
     args: [DEMO_VEHICLE_ID, "CA 123-456", "Mitchells Plain ↔ Cape Town CBD", DEMO_DRIVER_ID],
   });
 
   await client.execute({
-    sql: "INSERT INTO wallets (driver_id, balance, cashed_out) VALUES (?, 0, 0)",
+    sql: "INSERT OR IGNORE INTO wallets (driver_id, balance, cashed_out) VALUES (?, 0, 0)",
     args: [DEMO_DRIVER_ID],
   });
 }
 
-// Cached across hot reloads / route invocations so every query can just
-// `await ready` before touching the database, without re-running init.
+// Cached across hot reloads and separate module instances so every query
+// can just `await ready` before touching the database, without re-running
+// (or racing) init.
 export const ready = globalThis.__taxiPayReady ?? init();
-if (process.env.NODE_ENV !== "production") {
-  globalThis.__taxiPayReady = ready;
-}
+globalThis.__taxiPayReady = ready;

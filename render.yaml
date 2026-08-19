@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: taxi-pay
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render's free plan has an ephemeral filesystem — the local SQLite
+      # file (@libsql/client, see lib/db.ts) resets on every redeploy and
+      # whenever the free instance spins down from inactivity. Fine for a
+      # demo prototype; swap to a hosted libsql DB (e.g. Turso) or a
+      # Postgres datasource for persistence. See README.md.
+    autoDeploy: true

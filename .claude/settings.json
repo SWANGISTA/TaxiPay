@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(grep -oE '\\\\\"[a-z/-]*programme[a-z/-]*\\\\\"' /tmp/tsc_index.js | sort -u | head -30 *)",
+      "Read(//tmp/**)",
+      "Bash(cd \"/c/Users/10029404/AppData/Local/Temp/claude/c--Users-10029404-Personal-IAppy/f7667c13-636a-4d3f-84db-f8c79e469d95/scratchpad\" && grep -o 'href=\"/programmes/undergraduate/[^\"]*\"' up_ug.html | sort -u | wc -l *)",
+      "Read(//c/Users/10029404/AppData/Local/Temp/claude/c--Users-10029404-Personal-IAppy/f7667c13-636a-4d3f-84db-f8c79e469d95/scratchpad/**)",
+      "Bash(\"/c/Program Files/nodejs/node.exe\" src/utils/generateSeedData.js 41)",
+      "Bash(\"/c/Program Files/nodejs/node.exe\" -e \"require\\('./src/utils/seed.js'\\)\")",
+      "Read(//c/Users/10029404/AppData/Local/Temp/**)",
+      "Bash(node -e ' *)",
+      "Bash(npm install *)",
+      "Bash(node -e \"console.log\\(process.version\\)\")",
+      "Bash(node -e \"try{require\\('node:sqlite'\\);console.log\\('node:sqlite OK'\\)}catch\\(e\\){console.log\\('no node:sqlite',e.message\\)}\")"
+    ]
+  }
+}

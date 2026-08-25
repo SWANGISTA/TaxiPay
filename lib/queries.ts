@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { db, ready } from "./db";
-import { transactions, wallets, type Transaction } from "./schema";
-import { DEMO_DRIVER_ID, DEMO_VEHICLE_ID } from "./constants";
+import { transactions, wallets, bankAccounts, payouts, type Transaction } from "./schema";
+import { DEMO_DRIVER_ID, DEMO_VEHICLE_ID, SA_BANKS } from "./constants";
 import { nanoid } from "nanoid";
 
 // ---------------------------------------------------------------------------
@@ -79,13 +79,103 @@ export async function getDriverSummary(driverId: string = DEMO_DRIVER_ID) {
     totalToday,
     ridesToday: paidToday.length,
     recent: all.slice(0, 15),
+    bankAccount: await getBankAccount(driverId),
   };
 }
 
-export async function cashOut(driverId: string = DEMO_DRIVER_ID) {
+// ---------------------------------------------------------------------------
+// Bank accounts + payouts. Still entirely simulated, like the rest of this
+// prototype — see lib/payment-provider.ts and build spec §6 for why an
+// indie project can't get direct access to a real bank-transfer rail.
+// "Cash out" just records who the (fake) money would have gone to.
+// ---------------------------------------------------------------------------
+
+function last4(accountNumber: string) {
+  return accountNumber.slice(-4);
+}
+
+// Never expose the full account number back to the client once saved —
+// only enough to confirm "yes, this is the account on file".
+export async function getBankAccount(driverId: string = DEMO_DRIVER_ID) {
+  await ready;
+  const account = await db.select().from(bankAccounts).where(eq(bankAccounts.driverId, driverId)).get();
+  if (!account) return null;
+  return {
+    bankName: account.bankName,
+    accountHolder: account.accountHolder,
+    accountType: account.accountType,
+    last4: last4(account.accountNumber),
+    updatedAt: account.updatedAt,
+  };
+}
+
+export async function saveBankAccount(
+  driverId: string,
+  input: {
+    bankName: string;
+    accountHolder: string;
+    accountNumber: string;
+    branchCode: string;
+    accountType: string;
+  }
+): Promise<{ ok: true } | { error: string }> {
+  const bankName = input.bankName?.trim();
+  const accountHolder = input.accountHolder?.trim();
+  const accountNumber = input.accountNumber?.trim();
+  const branchCode = input.branchCode?.trim();
+  const accountType = input.accountType?.trim().toUpperCase();
+
+  if (!bankName || !SA_BANKS.includes(bankName as (typeof SA_BANKS)[number])) {
+    return { error: "Select a bank." };
+  }
+  if (!accountHolder || accountHolder.length < 2) {
+    return { error: "Enter the account holder's name." };
+  }
+  if (!/^\d{6,11}$/.test(accountNumber ?? "")) {
+    return { error: "Account number should be 6-11 digits." };
+  }
+  if (!/^\d{4,6}$/.test(branchCode ?? "")) {
+    return { error: "Branch code should be 4-6 digits." };
+  }
+  if (accountType !== "SAVINGS" && accountType !== "CHEQUE") {
+    return { error: "Select an account type." };
+  }
+
+  await ready;
+  await db
+    .insert(bankAccounts)
+    .values({
+      driverId,
+      bankName,
+      accountHolder,
+      accountNumber,
+      branchCode,
+      accountType,
+      updatedAt: Date.now(),
+    })
+    .onConflictDoUpdate({
+      target: bankAccounts.driverId,
+      set: { bankName, accountHolder, accountNumber, branchCode, accountType, updatedAt: Date.now() },
+    });
+
+  return { ok: true };
+}
+
+export async function cashOut(
+  driverId: string = DEMO_DRIVER_ID
+): Promise<{ amount: number; bankName: string; last4: string } | { error: string }> {
   await ready;
   const wallet = await db.select().from(wallets).where(eq(wallets.driverId, driverId)).get();
-  if (!wallet || wallet.balance <= 0) return;
+  if (!wallet || wallet.balance <= 0) {
+    return { error: "Nothing to cash out yet." };
+  }
+
+  const account = await db.select().from(bankAccounts).where(eq(bankAccounts.driverId, driverId)).get();
+  if (!account) {
+    return { error: "Add a bank account before cashing out." };
+  }
+
+  const amount = wallet.balance;
 
   await db
     .update(wallets)
@@ -94,4 +184,15 @@ export async function cashOut(driverId: string = DEMO_DRIVER_ID) {
       balance: 0,
     })
     .where(eq(wallets.driverId, driverId));
+
+  await db.insert(payouts).values({
+    id: nanoid(10),
+    driverId,
+    amount,
+    bankName: account.bankName,
+    accountLast4: last4(account.accountNumber),
+    createdAt: Date.now(),
+  });
+
+  return { amount, bankName: account.bankName, last4: last4(account.accountNumber) };
 }

@@ -72,6 +72,25 @@ async function init() {
       balance REAL NOT NULL DEFAULT 0,
       cashed_out REAL NOT NULL DEFAULT 0
     );
+
+    CREATE TABLE IF NOT EXISTS bank_accounts (
+      driver_id TEXT PRIMARY KEY REFERENCES users(id),
+      bank_name TEXT NOT NULL,
+      account_holder TEXT NOT NULL,
+      account_number TEXT NOT NULL,
+      branch_code TEXT NOT NULL,
+      account_type TEXT NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS payouts (
+      id TEXT PRIMARY KEY,
+      driver_id TEXT NOT NULL REFERENCES users(id),
+      amount REAL NOT NULL,
+      bank_name TEXT NOT NULL,
+      account_last4 TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
   `);
 
   await seed();

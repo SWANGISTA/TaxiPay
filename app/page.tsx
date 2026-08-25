@@ -1,4 +1,4 @@
-import Link from "next/link";
+import DriverDashboardLink from "./components/DriverDashboardLink";
 
 export default function Home() {
   return (
@@ -11,12 +11,12 @@ export default function Home() {
         see the build spec doc alongside this repo for the production architecture and the two hard problems
         (driver same-day cash flow, patchy connectivity) that actually decide whether this works.
       </p>
-      <Link
+      <DriverDashboardLink
         href="/driver"
         className="mt-8 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:brightness-110"
       >
         Open driver dashboard →
-      </Link>
+      </DriverDashboardLink>
       <p className="mt-3 text-xs text-neutral-400">
         Generate a QR there, then open the link it shows (or scan it with a second device) to pay as the rider.
       </p>

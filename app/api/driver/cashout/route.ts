@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { cashOut, getDriverSummary } from "@/lib/queries";
 
-// Stands in for "instant payout to the driver's own wallet/bank" — the
+// Stands in for "instant payout to the driver's own bank account" — the
 // feature the build spec flags as the actual make-or-break of this idea
-// (see section 5). Here it just zeroes the in-app balance.
+// (see section 5). Still fully simulated: no real transfer happens, this
+// just records which (fake) account the money would have gone to. Requires
+// a bank account on file — see /api/driver/bank-account.
 export async function POST() {
-  await cashOut();
-  return NextResponse.json(await getDriverSummary());
+  const result = await cashOut();
+  if ("error" in result) {
+    return NextResponse.json({ error: result.error }, { status: 400 });
+  }
+  return NextResponse.json({ payout: result, ...(await getDriverSummary()) });
 }

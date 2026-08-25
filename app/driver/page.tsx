@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import type { Transaction } from "@/lib/schema";
+import BankAccountCard, { type BankAccountSummary } from "./BankAccountCard";
 
 type Summary = {
   balance: number;
@@ -10,6 +11,7 @@ type Summary = {
   totalToday: number;
   ridesToday: number;
   recent: Transaction[];
+  bankAccount: BankAccountSummary;
 };
 
 const statusStyles: Record<string, string> = {
@@ -24,6 +26,8 @@ export default function DriverPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [cashOutError, setCashOutError] = useState("");
+  const [payoutMessage, setPayoutMessage] = useState("");
 
   const refreshSummary = useCallback(async () => {
     const res = await fetch("/api/driver/summary");
@@ -87,7 +91,15 @@ export default function DriverPage() {
   }
 
   async function handleCashOut() {
-    await fetch("/api/driver/cashout", { method: "POST" });
+    setCashOutError("");
+    setPayoutMessage("");
+    const res = await fetch("/api/driver/cashout", { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) {
+      setCashOutError(data.error ?? "Could not cash out");
+      return;
+    }
+    setPayoutMessage(`Paid out R${data.payout.amount.toFixed(2)} to ${data.payout.bankName} •••• ${data.payout.last4}`);
     refreshSummary();
   }
 
@@ -171,13 +183,17 @@ export default function DriverPage() {
           <button
             type="button"
             onClick={handleCashOut}
-            disabled={!summary?.balance}
+            disabled={!summary?.balance || !summary?.bankAccount}
             className="mt-5 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cash out R{(summary?.balance ?? 0).toFixed(2)} now
           </button>
+          {cashOutError && <p className="mt-2 text-center text-xs text-red-600">{cashOutError}</p>}
+          {payoutMessage && <p className="mt-2 text-center text-xs font-medium text-green-700">{payoutMessage}</p>}
           <p className="mt-2 text-center text-xs text-neutral-400">
-            Simulates same-day payout — the real design problem this idea has to solve. See build spec §5.
+            {summary && !summary.bankAccount
+              ? "Add a bank account below to enable cash-out."
+              : "Simulates same-day payout — the real design problem this idea has to solve. See build spec §5."}
           </p>
         </section>
 
@@ -216,6 +232,10 @@ export default function DriverPage() {
             </tbody>
           </table>
         </section>
+      </div>
+
+      <div className="mt-6">
+        <BankAccountCard bankAccount={summary?.bankAccount ?? null} onSaved={refreshSummary} />
       </div>
     </main>
   );

@@ -55,7 +55,7 @@ export default function PayPage() {
 
       {txn && txn !== "not-found" && (
         <div className="w-full rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-neutral-400">TaxiPay</p>
+          <p className="text-xs uppercase tracking-wide text-brand">TaxiPay</p>
           <p className="mt-3 text-4xl font-bold tracking-tight">R{txn.amount.toFixed(2)}</p>
           <p className="mt-1 text-sm text-neutral-500">Fare requested by your driver</p>
 
@@ -64,7 +64,7 @@ export default function PayPage() {
               <button
                 onClick={pay}
                 disabled={paying}
-                className="mt-6 w-full rounded-lg bg-blue-600 py-3 text-base font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                className="mt-6 w-full rounded-lg bg-brand py-3 text-base font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
               >
                 {paying ? "Processing…" : "Pay now"}
               </button>

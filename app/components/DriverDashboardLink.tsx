@@ -59,16 +59,16 @@ export default function DriverDashboardLink({
             width="160"
             height="80"
           >
-            <rect x="2" y="10" width="46" height="16" rx="3" fill="#2563eb" />
-            <path d="M42 10 L52 10 L58 18 L58 26 L48 26 L48 10 Z" fill="#2563eb" />
-            <rect x="8" y="13" width="10" height="8" rx="1" fill="#bfdbfe" />
-            <rect x="20" y="13" width="10" height="8" rx="1" fill="#bfdbfe" />
-            <rect x="44" y="13" width="10" height="8" rx="1" fill="#bfdbfe" />
-            <circle cx="14" cy="27" r="4" fill="#171717" />
+            <rect x="2" y="10" width="46" height="16" rx="3" fill="var(--brand)" />
+            <path d="M42 10 L52 10 L58 18 L58 26 L48 26 L48 10 Z" fill="var(--brand)" />
+            <rect x="8" y="13" width="10" height="8" rx="1" fill="var(--accent-tint)" />
+            <rect x="20" y="13" width="10" height="8" rx="1" fill="var(--accent-tint)" />
+            <rect x="44" y="13" width="10" height="8" rx="1" fill="var(--accent-tint)" />
+            <circle cx="14" cy="27" r="4" fill="var(--ink)" />
             <circle cx="14" cy="27" r="1.6" fill="#d4d4d4" />
-            <circle cx="46" cy="27" r="4" fill="#171717" />
+            <circle cx="46" cy="27" r="4" fill="var(--ink)" />
             <circle cx="46" cy="27" r="1.6" fill="#d4d4d4" />
-            <rect x="56" y="19" width="3" height="3" rx="0.5" fill="#facc15" />
+            <rect x="56" y="19" width="3" height="3" rx="0.5" fill="var(--accent)" />
           </svg>
         </div>
       )}

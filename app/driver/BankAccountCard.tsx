@@ -86,7 +86,7 @@ export default function BankAccountCard({
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
           >
             Add bank account
           </button>
@@ -191,7 +191,7 @@ export default function BankAccountCard({
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-60"
+              className="flex-1 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
             >
               {saving ? "Saving…" : "Save bank account"}
             </button>

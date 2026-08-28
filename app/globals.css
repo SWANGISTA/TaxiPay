@@ -1,13 +1,52 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Gijima brand tokens — the single source of truth for the palette. Swap
+   the hex values here (they're a best estimate, not yet confirmed against
+   an official brand guide) and every themed element below updates with it;
+   nothing else in the codebase should hardcode these colors directly.
+
+   - brand / brand-dark   "Potters Clay"  — primary buttons, links, brand text
+   - accent / accent-dark "Goldenrod"     — secondary CTAs, highlights, badges
+                                             (accent-dark is a darkened, AA-safe
+                                             variant for use as text/icon color
+                                             on light backgrounds — the raw
+                                             Goldenrod is too light for that)
+   - ink                  "Cod Gray"      — primary near-black text
+   Contrast checked against WCAG AA (4.5:1 normal text):
+     white text on --brand      → 4.8:1
+     --brand text on white      → 4.8:1
+     --ink text on --accent     → 12.9:1
+     --accent-dark text on white → 4.9:1
+   --------------------------------------------------------------------------- */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #101010; /* Cod Gray */
+
+  --brand: #8a6d3b; /* Potters Clay */
+  --brand-dark: #6e572f; /* hover/active state */
+  --brand-tint: #f3ede4; /* subtle warm-neutral wash, used sparingly */
+
+  --accent: #f9cf79; /* Goldenrod — background fills, pair with --ink text */
+  --accent-dark: #916a1d; /* AA-safe darker gold, for text/icons on light bg */
+  --accent-tint: #fdf3df; /* pale goldenrod wash, e.g. pending-status badges */
+
+  --ink: #101010; /* Cod Gray */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-tint: var(--brand-tint);
+
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-tint: var(--accent-tint);
+
+  --color-ink: var(--ink);
 }
 
 body {
@@ -65,7 +104,7 @@ body {
   flex-direction: column;
   gap: 4px;
   padding: 6px;
-  background: #262626;
+  background: var(--ink);
   border-radius: 6px;
 }
 

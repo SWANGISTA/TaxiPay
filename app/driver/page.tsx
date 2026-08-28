@@ -14,8 +14,10 @@ type Summary = {
   bankAccount: BankAccountSummary;
 };
 
+// PENDING uses the brand's own Goldenrod rather than a generic Tailwind
+// amber — PAID/FAILED stay semantic green/red for unambiguous status reading.
 const statusStyles: Record<string, string> = {
-  PENDING: "bg-amber-100 text-amber-800",
+  PENDING: "bg-accent-tint text-accent-dark",
   PAID: "bg-green-100 text-green-800",
   FAILED: "bg-red-100 text-red-800",
 };
@@ -111,7 +113,7 @@ export default function DriverPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-10">
-      <header className="mb-8">
+      <header className="mb-8 border-b-2 border-brand pb-4">
         <h1 className="text-2xl font-bold tracking-tight">ServiceHub → TaxiPay driver dashboard</h1>
         <p className="mt-1 max-w-2xl text-sm text-neutral-600">
           Prototype only — payments here are simulated by a mock provider, not a real payment rail. See the
@@ -120,7 +122,7 @@ export default function DriverPage() {
       </header>
 
       <section className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Kpi label="Wallet balance" value={`R${(summary?.balance ?? 0).toFixed(2)}`} />
+        <Kpi label="Wallet balance" value={`R${(summary?.balance ?? 0).toFixed(2)}`} highlight />
         <Kpi label="Earned today" value={`R${(summary?.totalToday ?? 0).toFixed(2)}`} />
         <Kpi label="Rides today" value={String(summary?.ridesToday ?? 0)} />
         <Kpi label="Cashed out (total)" value={`R${(summary?.cashedOut ?? 0).toFixed(2)}`} />
@@ -148,7 +150,7 @@ export default function DriverPage() {
             <button
               type="submit"
               disabled={generating}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-60"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-60"
             >
               {generating ? "Generating…" : "Generate QR"}
             </button>
@@ -160,9 +162,11 @@ export default function DriverPage() {
             <div className="flex flex-col items-center gap-3 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
               {activeTxn.status === "PENDING" && payUrl && (
                 <>
-                  <QRCodeSVG value={payUrl} size={180} />
+                  <div className="rounded-lg border-4 border-accent bg-white p-3">
+                    <QRCodeSVG value={payUrl} size={180} />
+                  </div>
                   <p className="text-center text-xs text-neutral-500 break-all">{payUrl}</p>
-                  <p className="text-sm font-medium text-amber-700">
+                  <p className="text-sm font-medium text-accent-dark">
                     Waiting for rider to pay R{activeTxn.amount.toFixed(2)}…
                   </p>
                 </>
@@ -184,7 +188,7 @@ export default function DriverPage() {
             type="button"
             onClick={handleCashOut}
             disabled={!summary?.balance || !summary?.bankAccount}
-            className="mt-5 w-full rounded-lg border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-5 w-full rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cash out R{(summary?.balance ?? 0).toFixed(2)} now
           </button>
@@ -241,7 +245,15 @@ export default function DriverPage() {
   );
 }
 
-function Kpi({ label, value }: { label: string; value: string }) {
+function Kpi({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  if (highlight) {
+    return (
+      <div className="rounded-xl border border-brand bg-brand p-4 text-white shadow-sm">
+        <div className="text-xs text-white/75">{label}</div>
+        <div className="mt-1 text-xl font-semibold tracking-tight">{value}</div>
+      </div>
+    );
+  }
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
       <div className="text-xs text-neutral-500">{label}</div>
